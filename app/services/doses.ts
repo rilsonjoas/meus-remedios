@@ -2,13 +2,13 @@ import { api } from './api';
 import { Medication, DoseSchedule } from './medications';
 
 export interface DoseLog {
-  id: number;
+  id: number | string; // 'pending_<scheduleId>' quando ainda não registrado
   dose_schedule_id: number;
   medication_id: number;
   profile_id: number;
   scheduled_at: string;
   taken_at: string | null;
-  status: 'taken' | 'skipped' | 'missed';
+  status: 'taken' | 'skipped' | 'missed' | 'pending';
   notes: string | null;
   medication: Medication;
   dose_schedule: DoseSchedule;

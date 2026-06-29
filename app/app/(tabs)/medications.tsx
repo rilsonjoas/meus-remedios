@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Link } from 'expo-router';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { useProfileStore } from '../../store/profileStore';
 import { getMedications } from '../../services/medications';
@@ -42,7 +43,7 @@ export default function MedicationsScreen() {
                     {item.schedules.length} horário(s) · {item.stock?.current_quantity ?? 0} {item.stock?.unit ?? 'unid'} em estoque
                   </Text>
                 </View>
-                <Text style={styles.arrow}>›</Text>
+                <MaterialCommunityIcons name="chevron-right" size={22} color="#cbd5e1" />
               </TouchableOpacity>
             </Link>
           )}
@@ -51,7 +52,7 @@ export default function MedicationsScreen() {
 
       <Link href="/medication/new" asChild>
         <TouchableOpacity style={styles.fab}>
-          <Text style={styles.fabText}>+</Text>
+          <MaterialCommunityIcons name="plus" size={28} color="#fff" />
         </TouchableOpacity>
       </Link>
     </View>
@@ -96,5 +97,5 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 },
   },
-  fabText: { color: '#fff', fontSize: 28, fontWeight: '300', lineHeight: 32 },
+  fabText: { color: '#fff', fontSize: 28, fontWeight: '300', lineHeight: 32 }, // unused, kept for reference
 });

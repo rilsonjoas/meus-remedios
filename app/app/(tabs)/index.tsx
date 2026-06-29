@@ -8,93 +8,192 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
+import { Link } from 'expo-router';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useProfileStore } from '../../store/profileStore';
 import { getTodayDoses, logDose, DoseLog } from '../../services/doses';
 import { api } from '../../services/api';
-import { Profile } from '../../store/profileStore';
 
 export default function HomeScreen() {
   const { activeProfile, profiles, setProfiles, setActiveProfile } = useProfileStore();
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    api.get('/profiles').then(({ data }) => setProfiles(data));
+    api.get('/profiles').then(({ data }) => {
+      setProfiles(data);
+    });
   }, []);
 
-  const { data: doses = [], isLoading, refetch } = useQuery({
+  const { data: doses = [], isLoading, refetch, isRefetching } = useQuery({
     queryKey: ['today-doses', activeProfile?.id],
     queryFn: () => getTodayDoses(activeProfile!.id),
     enabled: !!activeProfile,
   });
 
   const markDose = useMutation({
-    mutationFn: (log: DoseLog) =>
+    mutationFn: (dose: DoseLog) =>
       logDose({
-        dose_schedule_id: log.dose_schedule_id,
-        medication_id: log.medication_id,
-        profile_id: log.profile_id,
-        scheduled_at: log.scheduled_at,
+        dose_schedule_id: dose.dose_schedule_id,
+        medication_id: dose.medication_id,
+        profile_id: dose.profile_id,
+        scheduled_at: dose.scheduled_at,
         taken_at: new Date().toISOString(),
         status: 'taken',
       }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['today-doses'] }),
   });
 
+  const skipDose = useMutation({
+    mutationFn: (dose: DoseLog) =>
+      logDose({
+        dose_schedule_id: dose.dose_schedule_id,
+        medication_id: dose.medication_id,
+        profile_id: dose.profile_id,
+        scheduled_at: dose.scheduled_at,
+        status: 'skipped',
+      }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['today-doses'] }),
+  });
+
   const today = format(new Date(), "EEEE, d 'de' MMMM", { locale: ptBR });
+  const takenCount = doses.filter((d) => d.status === 'taken').length;
 
   return (
     <View style={styles.container}>
+      {/* Cabeçalho */}
       <View style={styles.header}>
-        <Text style={styles.date}>{today}</Text>
-        <Text style={styles.title}>Doses de hoje</Text>
-        <FlatList
-          data={profiles}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          keyExtractor={(p) => String(p.id)}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={[styles.profileChip, activeProfile?.id === item.id && styles.profileChipActive]}
-              onPress={() => setActiveProfile(item)}
-            >
-              <Text>{item.avatar_emoji} {item.name}</Text>
-            </TouchableOpacity>
+        <View>
+          <Text style={styles.date}>{today}</Text>
+          <Text style={styles.title}>Doses de hoje</Text>
+          {doses.length > 0 && (
+            <Text style={styles.progress}>
+              {takenCount} de {doses.length} tomadas
+            </Text>
           )}
-          style={styles.profileList}
-        />
+        </View>
+
+        {/* Seletor de perfil */}
+        {profiles.length > 0 && (
+          <FlatList
+            data={profiles}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(p) => String(p.id)}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={[styles.profileChip, activeProfile?.id === item.id && styles.profileChipActive]}
+                onPress={() => setActiveProfile(item)}
+              >
+                <MaterialCommunityIcons
+                  name={(item.avatar_emoji as any) ?? 'account'}
+                  size={15}
+                  color={activeProfile?.id === item.id ? '#6366f1' : 'rgba(255,255,255,0.9)'}
+                />
+                <Text style={[
+                  styles.profileChipText,
+                  activeProfile?.id === item.id && styles.profileChipTextActive,
+                ]}>
+                  {item.name}
+                </Text>
+              </TouchableOpacity>
+            )}
+            style={styles.profileList}
+          />
+        )}
       </View>
 
-      {isLoading ? (
-        <ActivityIndicator style={{ marginTop: 40 }} color="#6366f1" />
-      ) : (
+      {/* Sem perfis */}
+      {!isLoading && profiles.length === 0 && (
+        <View style={styles.emptyBox}>
+          <MaterialCommunityIcons name="account-plus-outline" size={56} color="#cbd5e1" />
+          <Text style={styles.emptyTitle}>Nenhum perfil criado</Text>
+          <Text style={styles.emptyText}>Crie um perfil de paciente para começar a gerenciar os medicamentos.</Text>
+          <Link href="/(tabs)/profile" asChild>
+            <TouchableOpacity style={styles.emptyBtn}>
+              <Text style={styles.emptyBtnText}>Criar perfil</Text>
+            </TouchableOpacity>
+          </Link>
+        </View>
+      )}
+
+      {/* Sem medicamentos */}
+      {!isLoading && activeProfile && doses.length === 0 && (
+        <View style={styles.emptyBox}>
+          <MaterialCommunityIcons name="pill-off" size={56} color="#cbd5e1" />
+          <Text style={styles.emptyTitle}>Nenhuma dose hoje</Text>
+          <Text style={styles.emptyText}>Adicione um medicamento com horário para vê-lo aqui.</Text>
+          <Link href="/(tabs)/medications" asChild>
+            <TouchableOpacity style={styles.emptyBtn}>
+              <Text style={styles.emptyBtnText}>Adicionar medicamento</Text>
+            </TouchableOpacity>
+          </Link>
+        </View>
+      )}
+
+      {/* Loading */}
+      {isLoading && <ActivityIndicator style={{ marginTop: 40 }} color="#6366f1" />}
+
+      {/* Lista de doses */}
+      {doses.length > 0 && (
         <FlatList
           data={doses}
           keyExtractor={(d) => String(d.id)}
           contentContainerStyle={styles.list}
-          refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refetch} />}
-          ListEmptyComponent={<Text style={styles.empty}>Nenhuma dose agendada para hoje.</Text>}
-          renderItem={({ item }) => (
-            <View style={[styles.card, item.status === 'taken' && styles.cardTaken]}>
-              <View style={[styles.colorBar, { backgroundColor: item.medication.color }]} />
-              <View style={styles.cardBody}>
-                <Text style={styles.medName}>{item.medication.name}</Text>
-                <Text style={styles.medDosage}>{item.medication.dosage} {item.medication.unit}</Text>
-                <Text style={styles.medTime}>{item.dose_schedule.time}</Text>
+          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
+          renderItem={({ item }) => {
+            const taken = item.status === 'taken';
+            const skipped = item.status === 'skipped';
+            const time = format(parseISO(item.scheduled_at), 'HH:mm');
+
+            return (
+              <View style={[styles.card, (taken || skipped) && styles.cardDone]}>
+                <View style={[styles.colorBar, { backgroundColor: item.medication.color }]} />
+                <View style={styles.timeCol}>
+                  <Text style={styles.time}>{time}</Text>
+                </View>
+                <View style={styles.cardBody}>
+                  <Text style={styles.medName}>{item.medication.name}</Text>
+                  <Text style={styles.medDosage}>
+                    {item.medication.dosage} {item.medication.unit}
+                  </Text>
+                </View>
+                {!taken && !skipped && (
+                  <View style={styles.actions}>
+                    <TouchableOpacity
+                      style={styles.takeButton}
+                      onPress={() => markDose.mutate(item)}
+                      disabled={markDose.isPending}
+                    >
+                      <MaterialCommunityIcons name="check" size={18} color="#fff" />
+                      <Text style={styles.takeButtonText}>Tomei</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.skipButton}
+                      onPress={() => skipDose.mutate(item)}
+                      disabled={skipDose.isPending}
+                    >
+                      <MaterialCommunityIcons name="close" size={16} color="#94a3b8" />
+                    </TouchableOpacity>
+                  </View>
+                )}
+                {taken && (
+                  <View style={styles.statusBadge}>
+                    <MaterialCommunityIcons name="check-circle" size={18} color="#22c55e" />
+                    <Text style={styles.takenText}>Tomado</Text>
+                  </View>
+                )}
+                {skipped && (
+                  <View style={styles.statusBadge}>
+                    <MaterialCommunityIcons name="minus-circle" size={18} color="#94a3b8" />
+                    <Text style={styles.skippedText}>Pulado</Text>
+                  </View>
+                )}
               </View>
-              {item.status !== 'taken' && (
-                <TouchableOpacity
-                  style={styles.takeButton}
-                  onPress={() => markDose.mutate(item)}
-                >
-                  <Text style={styles.takeButtonText}>Tomei</Text>
-                </TouchableOpacity>
-              )}
-              {item.status === 'taken' && <Text style={styles.takenBadge}>✓ Tomado</Text>}
-            </View>
-          )}
+            );
+          }}
         />
       )}
     </View>
@@ -103,20 +202,43 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8fafc' },
-  header: { backgroundColor: '#6366f1', paddingTop: 60, paddingBottom: 20, paddingHorizontal: 20 },
-  date: { color: '#c7d2fe', fontSize: 14 },
-  title: { color: '#fff', fontSize: 24, fontWeight: '700', marginTop: 4 },
-  profileList: { marginTop: 16 },
+  header: { backgroundColor: '#6366f1', paddingTop: 56, paddingBottom: 20, paddingHorizontal: 20 },
+  date: { color: '#c7d2fe', fontSize: 13, textTransform: 'capitalize' },
+  title: { color: '#fff', fontSize: 24, fontWeight: '700', marginTop: 2 },
+  progress: { color: '#a5b4fc', fontSize: 13, marginTop: 4 },
+  profileList: { marginTop: 14 },
   profileChip: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: 'rgba(255,255,255,0.18)',
     borderRadius: 20,
-    paddingHorizontal: 14,
+    paddingHorizontal: 12,
     paddingVertical: 6,
     marginRight: 8,
   },
   profileChipActive: { backgroundColor: '#fff' },
-  list: { padding: 16, gap: 12 },
-  empty: { textAlign: 'center', color: '#94a3b8', marginTop: 40, fontSize: 16 },
+  profileChipText: { color: 'rgba(255,255,255,0.9)', fontSize: 13, fontWeight: '500' },
+  profileChipTextActive: { color: '#6366f1' },
+  list: { padding: 16, gap: 10 },
+  emptyBox: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 40,
+    gap: 10,
+    marginTop: 40,
+  },
+  emptyTitle: { fontSize: 17, fontWeight: '700', color: '#475569', textAlign: 'center' },
+  emptyText: { fontSize: 14, color: '#94a3b8', textAlign: 'center', lineHeight: 20 },
+  emptyBtn: {
+    backgroundColor: '#6366f1',
+    borderRadius: 12,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    marginTop: 8,
+  },
+  emptyBtnText: { color: '#fff', fontWeight: '600', fontSize: 15 },
   card: {
     backgroundColor: '#fff',
     borderRadius: 16,
@@ -129,19 +251,30 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
   },
-  cardTaken: { opacity: 0.6 },
-  colorBar: { width: 6, alignSelf: 'stretch' },
-  cardBody: { flex: 1, padding: 16 },
-  medName: { fontSize: 16, fontWeight: '600', color: '#1e293b' },
-  medDosage: { fontSize: 14, color: '#64748b', marginTop: 2 },
-  medTime: { fontSize: 13, color: '#6366f1', marginTop: 4, fontWeight: '500' },
+  cardDone: { opacity: 0.65 },
+  colorBar: { width: 5, alignSelf: 'stretch' },
+  timeCol: { paddingHorizontal: 12, alignItems: 'center' },
+  time: { fontSize: 15, fontWeight: '700', color: '#6366f1' },
+  cardBody: { flex: 1, paddingVertical: 16 },
+  medName: { fontSize: 15, fontWeight: '600', color: '#1e293b' },
+  medDosage: { fontSize: 13, color: '#64748b', marginTop: 2 },
+  actions: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingRight: 12 },
   takeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     backgroundColor: '#6366f1',
-    margin: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 10,
   },
-  takeButtonText: { color: '#fff', fontWeight: '600' },
-  takenBadge: { color: '#22c55e', fontWeight: '700', marginRight: 16 },
+  takeButtonText: { color: '#fff', fontWeight: '600', fontSize: 13 },
+  skipButton: {
+    padding: 6,
+    borderRadius: 8,
+    backgroundColor: '#f1f5f9',
+  },
+  statusBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingRight: 14 },
+  takenText: { color: '#22c55e', fontWeight: '600', fontSize: 13 },
+  skippedText: { color: '#94a3b8', fontWeight: '600', fontSize: 13 },
 });

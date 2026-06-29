@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useProfileStore } from '../../store/profileStore';
 import {
   createMedication,
@@ -18,6 +19,7 @@ import {
   createSchedule,
   getMedications,
 } from '../../services/medications';
+import { scheduleScheduleNotifications } from '../../services/notifications';
 
 const COLORS = ['#6366f1', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ef4444', '#14b8a6'];
 
@@ -64,7 +66,15 @@ export default function MedicationFormScreen() {
       if (isNew) {
         const med = await createMedication(activeProfile.id, { name, dosage, unit, color, instructions });
         if (scheduleTime) {
-          await createSchedule(med.id, { time: scheduleTime, days_of_week: [0, 1, 2, 3, 4, 5, 6] });
+          const schedule = await createSchedule(med.id, { time: scheduleTime, days_of_week: [0, 1, 2, 3, 4, 5, 6] });
+          await scheduleScheduleNotifications({
+            scheduleId: schedule.id,
+            time: scheduleTime,
+            days_of_week: null, // todos os dias
+            medicationName: name,
+            dosage,
+            unit,
+          });
         }
       } else {
         await updateMedication(Number(id), { name, dosage, unit, color, instructions });

@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useProfileStore } from '../../store/profileStore';
 import { getMedications, updateStock, Medication } from '../../services/medications';
 
@@ -61,7 +62,12 @@ export default function StockScreen() {
                 <View style={[styles.colorDot, { backgroundColor: item.color }]} />
                 <View style={styles.info}>
                   <Text style={styles.name}>{item.name}</Text>
-                  {isLow && <Text style={styles.alertText}>⚠️ Estoque baixo</Text>}
+                  {isLow && (
+                    <View style={styles.alertRow}>
+                      <MaterialCommunityIcons name="alert-circle-outline" size={14} color="#f59e0b" />
+                      <Text style={styles.alertText}>Estoque baixo</Text>
+                    </View>
+                  )}
                   {editing === item.id ? (
                     <View style={styles.editRow}>
                       <TextInput
@@ -88,7 +94,7 @@ export default function StockScreen() {
                     setQty(String(stock?.current_quantity ?? 0));
                   }}
                 >
-                  <Text style={styles.editIcon}>✏️</Text>
+                  <MaterialCommunityIcons name="pencil-outline" size={20} color="#94a3b8" />
                 </TouchableOpacity>
               </View>
             );
@@ -119,7 +125,8 @@ const styles = StyleSheet.create({
   colorDot: { width: 14, height: 14, borderRadius: 7, marginRight: 14 },
   info: { flex: 1 },
   name: { fontSize: 16, fontWeight: '600', color: '#1e293b' },
-  alertText: { fontSize: 13, color: '#f59e0b', marginTop: 2 },
+  alertRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
+  alertText: { fontSize: 13, color: '#f59e0b' },
   qty: { fontSize: 15, color: '#6366f1', fontWeight: '600', marginTop: 4 },
   editRow: { flexDirection: 'row', alignItems: 'center', marginTop: 4, gap: 8 },
   input: {
@@ -134,5 +141,4 @@ const styles = StyleSheet.create({
   unit: { color: '#64748b', fontSize: 14 },
   saveBtn: { backgroundColor: '#6366f1', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 },
   saveBtnText: { color: '#fff', fontWeight: '600', fontSize: 13 },
-  editIcon: { fontSize: 20, marginLeft: 8 },
 });

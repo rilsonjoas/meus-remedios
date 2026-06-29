@@ -11,6 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import { Link } from 'expo-router';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { login } from '../../services/auth';
 import { useAuthStore } from '../../store/authStore';
 
@@ -39,13 +40,16 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={styles.inner}>
-        <Text style={styles.logo}>💊</Text>
+        <View style={styles.logoBox}>
+          <MaterialCommunityIcons name="pill" size={48} color="#6366f1" />
+        </View>
         <Text style={styles.title}>Meus Remédios</Text>
         <Text style={styles.subtitle}>Faça login para continuar</Text>
 
         <TextInput
           style={styles.input}
           placeholder="Email"
+          placeholderTextColor="#9ca3af"
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
@@ -54,6 +58,7 @@ export default function LoginScreen() {
         <TextInput
           style={styles.input}
           placeholder="Senha"
+          placeholderTextColor="#9ca3af"
           value={password}
           onChangeText={setPassword}
           secureTextEntry
@@ -74,7 +79,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8fafc' },
   inner: { flex: 1, justifyContent: 'center', paddingHorizontal: 24 },
-  logo: { fontSize: 64, textAlign: 'center', marginBottom: 8 },
+  logoBox: { alignItems: 'center', marginBottom: 12 },
   title: { fontSize: 28, fontWeight: '700', textAlign: 'center', color: '#1e293b' },
   subtitle: { fontSize: 16, textAlign: 'center', color: '#64748b', marginBottom: 32 },
   input: {
@@ -85,6 +90,7 @@ const styles = StyleSheet.create({
     padding: 16,
     fontSize: 16,
     marginBottom: 12,
+    color: '#1e293b',
   },
   button: {
     backgroundColor: '#6366f1',
