@@ -30,17 +30,15 @@ App mobile de gestão de medicamentos para pacientes crônicos. Objetivo é vira
 
 Ver README.md para lista completa de pacotes instalados.
 
+## Estado atual
+
+Backend e app scaffoldados e funcionando. Cadastro/login operacional.
+Ver README.md para lista completa de próximos passos.
+
 ## Próximo passo ao retomar
 
-Criar as migrations do Laravel na seguinte ordem:
-1. Alterar `users` table (google_id, subscription_tier, avatar_url)
-2. `profiles`
-3. `medications`
-4. `dose_schedules`
-5. `dose_logs`
-6. `stock_items`
-
-Depois: Models → Controllers → Routes → Expo screens.
+Fluxo de onboarding pós-cadastro: usuário cria primeiro perfil e
+adiciona primeiro medicamento. Depois notificações locais.
 
 ## Restrições do ambiente
 

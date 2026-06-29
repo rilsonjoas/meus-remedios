@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -14,12 +14,16 @@ import { Link } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { login } from '../../services/auth';
 import { useAuthStore } from '../../store/authStore';
+import { useTheme } from '../../hooks/useTheme';
+import { ThemeColors } from '../../constants/theme';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const setUser = useAuthStore((s) => s.setUser);
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   async function handleLogin() {
     if (!email || !password) return;
@@ -35,13 +39,10 @@ export default function LoginScreen() {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
+    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <View style={styles.inner}>
         <View style={styles.logoBox}>
-          <MaterialCommunityIcons name="pill" size={48} color="#6366f1" />
+          <MaterialCommunityIcons name="pill" size={48} color={colors.brand} />
         </View>
         <Text style={styles.title}>Meus Remédios</Text>
         <Text style={styles.subtitle}>Faça login para continuar</Text>
@@ -49,19 +50,21 @@ export default function LoginScreen() {
         <TextInput
           style={styles.input}
           placeholder="Email"
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor={colors.textMuted}
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
           keyboardType="email-address"
+          color={colors.text}
         />
         <TextInput
           style={styles.input}
           placeholder="Senha"
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor={colors.textMuted}
           value={password}
           onChangeText={setPassword}
           secureTextEntry
+          color={colors.text}
         />
 
         <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
@@ -76,30 +79,22 @@ export default function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8fafc' },
-  inner: { flex: 1, justifyContent: 'center', paddingHorizontal: 24 },
-  logoBox: { alignItems: 'center', marginBottom: 12 },
-  title: { fontSize: 28, fontWeight: '700', textAlign: 'center', color: '#1e293b' },
-  subtitle: { fontSize: 16, textAlign: 'center', color: '#64748b', marginBottom: 32 },
-  input: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
-    marginBottom: 12,
-    color: '#1e293b',
-  },
-  button: {
-    backgroundColor: '#6366f1',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    marginTop: 8,
-    marginBottom: 16,
-  },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  link: { textAlign: 'center', color: '#6366f1', fontSize: 15 },
-});
+function makeStyles(c: ThemeColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.background },
+    inner: { flex: 1, justifyContent: 'center', paddingHorizontal: 24 },
+    logoBox: { alignItems: 'center', marginBottom: 12 },
+    title: { fontSize: 28, fontWeight: '700', textAlign: 'center', color: c.text },
+    subtitle: { fontSize: 16, textAlign: 'center', color: c.textSecondary, marginBottom: 32 },
+    input: {
+      backgroundColor: c.surface, borderWidth: 1, borderColor: c.border,
+      borderRadius: 12, padding: 16, fontSize: 16, marginBottom: 12,
+    },
+    button: {
+      backgroundColor: c.brand, borderRadius: 12, padding: 16,
+      alignItems: 'center', marginTop: 8, marginBottom: 16,
+    },
+    buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+    link: { textAlign: 'center', color: c.brand, fontSize: 15 },
+  });
+}

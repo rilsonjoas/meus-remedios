@@ -1,8 +1,6 @@
 import { Tabs } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-
-const ACTIVE = '#6366f1';
-const INACTIVE = '#94a3b8';
+import { useTheme } from '../../hooks/useTheme';
 
 type IconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
 
@@ -11,20 +9,24 @@ function TabIcon({ name, color }: { name: IconName; color: string }) {
 }
 
 export default function TabsLayout() {
+  const { colors } = useTheme();
+
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: ACTIVE,
-        tabBarInactiveTintColor: INACTIVE,
-        tabBarStyle: { borderTopColor: '#e2e8f0' },
-        headerStyle: { backgroundColor: '#fff' },
-        headerTitleStyle: { color: '#1e293b', fontWeight: '700' },
+        tabBarActiveTintColor: colors.brand,
+        tabBarInactiveTintColor: colors.textMuted,
+        tabBarStyle: { backgroundColor: colors.tabBar, borderTopColor: colors.tabBarBorder },
+        headerStyle: { backgroundColor: colors.surface },
+        headerTitleStyle: { color: colors.text, fontWeight: '700' },
+        headerShadowVisible: false,
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
           title: 'Hoje',
+          headerShown: false,
           tabBarIcon: ({ color }) => <TabIcon name="home-outline" color={color} />,
         }}
       />

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -13,9 +13,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useProfileStore } from '../../store/profileStore';
 import { getMedications, updateStock, Medication } from '../../services/medications';
+import { useTheme } from '../../hooks/useTheme';
+import { ThemeColors } from '../../constants/theme';
 
 export default function StockScreen() {
   const { activeProfile } = useProfileStore();
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState<number | null>(null);
   const [qty, setQty] = useState('');
@@ -47,7 +51,7 @@ export default function StockScreen() {
   return (
     <View style={styles.container}>
       {isLoading ? (
-        <ActivityIndicator style={{ marginTop: 40 }} color="#6366f1" />
+        <ActivityIndicator style={{ marginTop: 40 }} color={colors.brand} />
       ) : (
         <FlatList
           data={medications}
@@ -64,7 +68,7 @@ export default function StockScreen() {
                   <Text style={styles.name}>{item.name}</Text>
                   {isLow && (
                     <View style={styles.alertRow}>
-                      <MaterialCommunityIcons name="alert-circle-outline" size={14} color="#f59e0b" />
+                      <MaterialCommunityIcons name="alert-circle-outline" size={14} color={colors.warning} />
                       <Text style={styles.alertText}>Estoque baixo</Text>
                     </View>
                   )}
@@ -76,6 +80,8 @@ export default function StockScreen() {
                         onChangeText={setQty}
                         keyboardType="decimal-pad"
                         placeholder="Qtd"
+                        placeholderTextColor={colors.textMuted}
+                        color={colors.text}
                       />
                       <Text style={styles.unit}>{stock?.unit}</Text>
                       <TouchableOpacity onPress={() => saveQty(item)} style={styles.saveBtn}>
@@ -88,13 +94,8 @@ export default function StockScreen() {
                     </Text>
                   )}
                 </View>
-                <TouchableOpacity
-                  onPress={() => {
-                    setEditing(item.id);
-                    setQty(String(stock?.current_quantity ?? 0));
-                  }}
-                >
-                  <MaterialCommunityIcons name="pencil-outline" size={20} color="#94a3b8" />
+                <TouchableOpacity onPress={() => { setEditing(item.id); setQty(String(stock?.current_quantity ?? 0)); }}>
+                  <MaterialCommunityIcons name="pencil-outline" size={20} color={colors.textMuted} />
                 </TouchableOpacity>
               </View>
             );
@@ -105,40 +106,31 @@ export default function StockScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8fafc' },
-  list: { padding: 16, gap: 12 },
-  empty: { textAlign: 'center', color: '#94a3b8', marginTop: 40, fontSize: 16 },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-  },
-  cardAlert: { borderWidth: 1.5, borderColor: '#fbbf24' },
-  colorDot: { width: 14, height: 14, borderRadius: 7, marginRight: 14 },
-  info: { flex: 1 },
-  name: { fontSize: 16, fontWeight: '600', color: '#1e293b' },
-  alertRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
-  alertText: { fontSize: 13, color: '#f59e0b' },
-  qty: { fontSize: 15, color: '#6366f1', fontWeight: '600', marginTop: 4 },
-  editRow: { flexDirection: 'row', alignItems: 'center', marginTop: 4, gap: 8 },
-  input: {
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    width: 80,
-    fontSize: 15,
-  },
-  unit: { color: '#64748b', fontSize: 14 },
-  saveBtn: { backgroundColor: '#6366f1', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 },
-  saveBtnText: { color: '#fff', fontWeight: '600', fontSize: 13 },
-});
+function makeStyles(c: ThemeColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.background },
+    list: { padding: 16, gap: 12 },
+    empty: { textAlign: 'center', color: c.textMuted, marginTop: 40, fontSize: 16 },
+    card: {
+      backgroundColor: c.surface, borderRadius: 16,
+      flexDirection: 'row', alignItems: 'center', padding: 16,
+      elevation: 2, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, shadowOffset: { width: 0, height: 2 },
+    },
+    cardAlert: { borderWidth: 1.5, borderColor: c.warning },
+    colorDot: { width: 14, height: 14, borderRadius: 7, marginRight: 14 },
+    info: { flex: 1 },
+    name: { fontSize: 16, fontWeight: '600', color: c.text },
+    alertRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
+    alertText: { fontSize: 13, color: c.warning },
+    qty: { fontSize: 15, color: c.brand, fontWeight: '600', marginTop: 4 },
+    editRow: { flexDirection: 'row', alignItems: 'center', marginTop: 4, gap: 8 },
+    input: {
+      borderWidth: 1, borderColor: c.border, borderRadius: 8,
+      paddingHorizontal: 10, paddingVertical: 6, width: 80, fontSize: 15,
+      backgroundColor: c.surface,
+    },
+    unit: { color: c.textSecondary, fontSize: 14 },
+    saveBtn: { backgroundColor: c.brand, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 },
+    saveBtnText: { color: '#fff', fontWeight: '600', fontSize: 13 },
+  });
+}

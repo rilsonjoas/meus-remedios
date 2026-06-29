@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useAuthStore } from '../store/authStore';
 import { getMe } from '../services/auth';
 import { requestNotificationPermission } from '../services/notifications';
+import { useTheme } from '../hooks/useTheme';
 
 const queryClient = new QueryClient();
 
@@ -30,6 +31,24 @@ function AuthGuard() {
   return null;
 }
 
+function ThemedLayout() {
+  const { isDark } = useTheme();
+
+  return (
+    <>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(auth)" />
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen
+          name="medication/[id]"
+          options={{ headerShown: true, title: 'Medicamento', presentation: 'modal' }}
+        />
+      </Stack>
+    </>
+  );
+}
+
 export default function RootLayout() {
   useEffect(() => {
     requestNotificationPermission();
@@ -38,12 +57,7 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthGuard />
-      <StatusBar style="auto" />
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(auth)" />
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="medication/[id]" options={{ headerShown: true, title: 'Medicamento', presentation: 'modal' }} />
-      </Stack>
+      <ThemedLayout />
     </QueryClientProvider>
   );
 }

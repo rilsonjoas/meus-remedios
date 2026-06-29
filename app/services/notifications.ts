@@ -16,7 +16,6 @@ export async function requestNotificationPermission(): Promise<boolean> {
     await Notifications.setNotificationChannelAsync('doses', {
       name: 'Lembretes de doses',
       importance: Notifications.AndroidImportance.HIGH,
-      sound: 'default',
       vibrationPattern: [0, 250, 250, 250],
     });
   }
@@ -51,7 +50,7 @@ export async function scheduleScheduleNotifications(params: {
       content: {
         title: `Hora de tomar ${medicationName}`,
         body,
-        sound: 'default',
+        sound: true,
         data: { scheduleId },
       },
       trigger: {
@@ -69,7 +68,7 @@ export async function scheduleScheduleNotifications(params: {
         content: {
           title: `Hora de tomar ${medicationName}`,
           body,
-          sound: 'default',
+          sound: true,
           data: { scheduleId },
         },
         trigger: {

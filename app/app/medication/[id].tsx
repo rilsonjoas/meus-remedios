@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -20,6 +20,8 @@ import {
   getMedications,
 } from '../../services/medications';
 import { scheduleScheduleNotifications } from '../../services/notifications';
+import { useTheme } from '../../hooks/useTheme';
+import { ThemeColors } from '../../constants/theme';
 
 const COLORS = ['#6366f1', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ef4444', '#14b8a6'];
 
@@ -29,6 +31,8 @@ export default function MedicationFormScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { activeProfile } = useProfileStore();
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const [name, setName] = useState('');
   const [dosage, setDosage] = useState('');
@@ -70,7 +74,7 @@ export default function MedicationFormScreen() {
           await scheduleScheduleNotifications({
             scheduleId: schedule.id,
             time: scheduleTime,
-            days_of_week: null, // todos os dias
+            days_of_week: null,
             medicationName: name,
             dosage,
             unit,
@@ -88,17 +92,39 @@ export default function MedicationFormScreen() {
     }
   }
 
-  if (loading) return <ActivityIndicator style={{ flex: 1 }} color="#6366f1" />;
+  if (loading) return <ActivityIndicator style={{ flex: 1, backgroundColor: colors.background }} color={colors.brand} />;
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.inner} keyboardShouldPersistTaps="handled">
       <Text style={styles.label}>Nome do medicamento *</Text>
-      <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Ex: Losartana" />
+      <TextInput
+        style={styles.input}
+        value={name}
+        onChangeText={setName}
+        placeholder="Ex: Losartana"
+        placeholderTextColor={colors.textMuted}
+        color={colors.text}
+      />
 
       <Text style={styles.label}>Dosagem *</Text>
       <View style={styles.row}>
-        <TextInput style={[styles.input, { flex: 1 }]} value={dosage} onChangeText={setDosage} placeholder="50" keyboardType="decimal-pad" />
-        <TextInput style={[styles.input, styles.unitInput]} value={unit} onChangeText={setUnit} placeholder="mg" />
+        <TextInput
+          style={[styles.input, { flex: 1 }]}
+          value={dosage}
+          onChangeText={setDosage}
+          placeholder="50"
+          placeholderTextColor={colors.textMuted}
+          keyboardType="decimal-pad"
+          color={colors.text}
+        />
+        <TextInput
+          style={[styles.input, styles.unitInput]}
+          value={unit}
+          onChangeText={setUnit}
+          placeholder="mg"
+          placeholderTextColor={colors.textMuted}
+          color={colors.text}
+        />
       </View>
 
       <Text style={styles.label}>Cor</Text>
@@ -120,6 +146,8 @@ export default function MedicationFormScreen() {
             value={scheduleTime}
             onChangeText={setScheduleTime}
             placeholder="08:00"
+            placeholderTextColor={colors.textMuted}
+            color={colors.text}
           />
         </>
       )}
@@ -130,8 +158,10 @@ export default function MedicationFormScreen() {
         value={instructions}
         onChangeText={setInstructions}
         placeholder="Ex: Tomar com água, em jejum..."
+        placeholderTextColor={colors.textMuted}
         multiline
         numberOfLines={3}
+        color={colors.text}
       />
 
       <TouchableOpacity style={styles.saveBtn} onPress={save} disabled={saving}>
@@ -141,30 +171,25 @@ export default function MedicationFormScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8fafc' },
-  inner: { padding: 20, paddingBottom: 48 },
-  label: { fontSize: 14, fontWeight: '600', color: '#475569', marginBottom: 6, marginTop: 16 },
-  input: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 12,
-    padding: 14,
-    fontSize: 16,
-  },
-  unitInput: { width: 80, marginLeft: 8 },
-  row: { flexDirection: 'row', alignItems: 'center' },
-  colorRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 4 },
-  colorBtn: { width: 32, height: 32, borderRadius: 16 },
-  colorBtnActive: { borderWidth: 3, borderColor: '#1e293b', transform: [{ scale: 1.15 }] },
-  textarea: { height: 90, textAlignVertical: 'top' },
-  saveBtn: {
-    backgroundColor: '#6366f1',
-    borderRadius: 14,
-    padding: 18,
-    alignItems: 'center',
-    marginTop: 32,
-  },
-  saveBtnText: { color: '#fff', fontSize: 17, fontWeight: '700' },
-});
+function makeStyles(c: ThemeColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.background },
+    inner: { padding: 20, paddingBottom: 48 },
+    label: { fontSize: 14, fontWeight: '600', color: c.textSecondary, marginBottom: 6, marginTop: 16 },
+    input: {
+      backgroundColor: c.surface, borderWidth: 1, borderColor: c.border,
+      borderRadius: 12, padding: 14, fontSize: 16,
+    },
+    unitInput: { width: 80, marginLeft: 8 },
+    row: { flexDirection: 'row', alignItems: 'center' },
+    colorRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 4 },
+    colorBtn: { width: 32, height: 32, borderRadius: 16 },
+    colorBtnActive: { borderWidth: 3, borderColor: c.text, transform: [{ scale: 1.15 }] },
+    textarea: { height: 90, textAlignVertical: 'top' },
+    saveBtn: {
+      backgroundColor: c.brand, borderRadius: 14, padding: 18,
+      alignItems: 'center', marginTop: 32,
+    },
+    saveBtnText: { color: '#fff', fontSize: 17, fontWeight: '700' },
+  });
+}

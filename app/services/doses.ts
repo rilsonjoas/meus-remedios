@@ -19,8 +19,18 @@ export async function getTodayDoses(profileId: number): Promise<DoseLog[]> {
   return data;
 }
 
-export async function getDoseHistory(profileId: number, page = 1) {
-  const { data } = await api.get(`/profiles/${profileId}/doses/history`, { params: { page } });
+export interface HistoryFilters {
+  status?: 'taken' | 'skipped' | 'missed';
+  medication_id?: number;
+  date_from?: string;
+  date_to?: string;
+  page?: number;
+}
+
+export async function getDoseHistory(profileId: number, filters: HistoryFilters = {}) {
+  const { data } = await api.get(`/profiles/${profileId}/doses/history`, {
+    params: { page: 1, ...filters },
+  });
   return data;
 }
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,8 @@ import { Link } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { register } from '../../services/auth';
 import { useAuthStore } from '../../store/authStore';
+import { useTheme } from '../../hooks/useTheme';
+import { ThemeColors } from '../../constants/theme';
 
 export default function RegisterScreen() {
   const [name, setName] = useState('');
@@ -23,6 +25,8 @@ export default function RegisterScreen() {
   const [passwordConfirmation, setPasswordConfirmation] = useState('');
   const [loading, setLoading] = useState(false);
   const setUser = useAuthStore((s) => s.setUser);
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   async function handleRegister() {
     if (!name || !email || !password || !passwordConfirmation) return;
@@ -43,42 +47,26 @@ export default function RegisterScreen() {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
+    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScrollView contentContainerStyle={styles.inner} keyboardShouldPersistTaps="handled">
         <View style={styles.logoBox}>
-          <MaterialCommunityIcons name="pill" size={48} color="#6366f1" />
+          <MaterialCommunityIcons name="pill" size={48} color={colors.brand} />
         </View>
         <Text style={styles.title}>Criar conta</Text>
 
-        <TextInput style={styles.input} placeholder="Nome" placeholderTextColor="#9ca3af" value={name} onChangeText={setName} />
+        <TextInput style={styles.input} placeholder="Nome" placeholderTextColor={colors.textMuted} value={name} onChangeText={setName} color={colors.text} />
         <TextInput
           style={styles.input}
           placeholder="Email"
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor={colors.textMuted}
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
           keyboardType="email-address"
+          color={colors.text}
         />
-        <TextInput
-          style={styles.input}
-          placeholder="Senha"
-          placeholderTextColor="#9ca3af"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Confirmar senha"
-          placeholderTextColor="#9ca3af"
-          value={passwordConfirmation}
-          onChangeText={setPasswordConfirmation}
-          secureTextEntry
-        />
+        <TextInput style={styles.input} placeholder="Senha" placeholderTextColor={colors.textMuted} value={password} onChangeText={setPassword} secureTextEntry color={colors.text} />
+        <TextInput style={styles.input} placeholder="Confirmar senha" placeholderTextColor={colors.textMuted} value={passwordConfirmation} onChangeText={setPasswordConfirmation} secureTextEntry color={colors.text} />
 
         <TouchableOpacity style={styles.button} onPress={handleRegister} disabled={loading}>
           {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Criar conta</Text>}
@@ -92,29 +80,21 @@ export default function RegisterScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8fafc' },
-  inner: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 48 },
-  logoBox: { alignItems: 'center', marginBottom: 12 },
-  title: { fontSize: 28, fontWeight: '700', textAlign: 'center', color: '#1e293b', marginBottom: 32 },
-  input: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
-    marginBottom: 12,
-    color: '#1e293b',
-  },
-  button: {
-    backgroundColor: '#6366f1',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    marginTop: 8,
-    marginBottom: 16,
-  },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  link: { textAlign: 'center', color: '#6366f1', fontSize: 15 },
-});
+function makeStyles(c: ThemeColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.background },
+    inner: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 48 },
+    logoBox: { alignItems: 'center', marginBottom: 12 },
+    title: { fontSize: 28, fontWeight: '700', textAlign: 'center', color: c.text, marginBottom: 32 },
+    input: {
+      backgroundColor: c.surface, borderWidth: 1, borderColor: c.border,
+      borderRadius: 12, padding: 16, fontSize: 16, marginBottom: 12,
+    },
+    button: {
+      backgroundColor: c.brand, borderRadius: 12, padding: 16,
+      alignItems: 'center', marginTop: 8, marginBottom: 16,
+    },
+    buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+    link: { textAlign: 'center', color: c.brand, fontSize: 15 },
+  });
+}

@@ -65,11 +65,27 @@ class DoseLogController extends Controller
 
         $days = $request->user()->isPro() ? 3650 : 30;
 
-        $logs = $profile->doseLogs()
+        $query = $profile->doseLogs()
             ->with(['medication', 'doseSchedule'])
-            ->where('scheduled_at', '>=', now()->subDays($days))
-            ->orderBy('scheduled_at', 'desc')
-            ->paginate(50);
+            ->where('scheduled_at', '>=', now()->subDays($days));
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('medication_id')) {
+            $query->where('medication_id', $request->medication_id);
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('scheduled_at', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('scheduled_at', '<=', $request->date_to);
+        }
+
+        $logs = $query->orderBy('scheduled_at', 'desc')->paginate(50);
 
         return response()->json($logs);
     }
